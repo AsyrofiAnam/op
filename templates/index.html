@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForumTBM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://code.highcharts.com/maps/highmaps.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/accessibility.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #5B86A4;
+            --secondary: #34495e;
+            --dark: #2c3e50;
+            --light: #F9FAFB;
+            --accent: #4CA1AF;
+            --gradient: linear-gradient(135deg, #5B86A4 0%, #4CA1AF 100%);
+            --map-bg: rgb(230, 244, 248);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        /* FIX: Hapus total elemen proxy accessibility highcharts */
+        .highcharts-a11y-proxy-element,
+        .highcharts-a11y-proxy-button,
+        .highcharts-a11y-proxy-group {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        header {
+            background-color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled {
+            padding: 5px 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-img {
+            height: 50px;
+            width: auto;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--secondary);
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+        }
+
+        .nav-link-icon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link-icon i {
+            font-size: 1rem;
+            padding: 10px 0;
+        }
+
+        .nav-link-icon span {
+            display: inline-block;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0px;
+            left: 0;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .nav-buttons-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-primary-nav {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(91, 134, 164, 0.2);
+        }
+
+        .btn-primary-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(91, 134, 164, 0.3);
+        }
+
+        .btn-secondary-nav {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 6px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary-nav:hover {
+            background: rgba(91, 134, 164, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .hero {
+            padding: 150px 0 100px;
+            background: linear-gradient(135deg, rgba(91, 134, 164, 0.1) 0%, rgba(76, 161, 175, 0.1) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 120px 0 80px;
+            }
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--dark);
+            line-height: 1.2;
+        }
+
+        .hero-title span {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .hero-actions {
+            margin-bottom: 40px;
+        }
+
+        .primary-btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(91, 134, 164, 0.3);
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(91, 134, 164, 0.4);
+        }
+
+        .secondary-btn {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 10px 28px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(91, 134, 164, 0.05);
+            transform: translateY(-3px);
+        }
+
+        .hero-visual {
+            position: relative;
+            padding: 20px;
+            animation: float 6s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .map-container {
+            height: 400px;
+            width: 100%;
+            position: relative;
+            background: var(--map-bg);
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.06),
+                0 1px 3px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            padding: 0;
+        }
+
+
+        .faq-section {
+            padding: 80px 0;
+            background: linear-gradient(135deg, rgba(91, 134, 164, 0.05) 0%, rgba(76, 161, 175, 0.05) 100%);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            background: white;
+        }
+
+        .faq-question {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: rgba(91, 134, 164, 0.03);
+        }
+
+        .faq-question h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .faq-icon {
+            color: var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 20px 20px;
+            max-height: 500px;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .download-guide {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 60px 0 20px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .footer-logo .logo-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        .footer-logo .logo-text {
+            color: white;
+        }
+
+        .footer-about p {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .footer-heading {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+            padding-left: 5px;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 62, 80, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content-inner {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .modal-overlay.active .modal-content-inner {
+            transform: scale(1);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            color: #34495e;
+        }
+
+        @media (max-width: 768px) {
+
+            .nav-menu.mobile-active {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: white;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .nav-menu.mobile-active .nav-link-icon {
+                justify-content: left;
+                padding: 10px 20px;
+                font-size: 1.1rem;
+            }
+
+            .nav-menu.mobile-active .nav-buttons-container {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 10px;
+            }
+
+            .nav-menu.mobile-active #profile-dropdown {
+                display: block;
+                width: 100%;
+            }
+
+            .nav-menu.mobile-active #profile-btn {
+                justify-content: center;
+                padding: 10px;
+                background-color: #f9fafb;
+                /* bg-gray-50 */
+                border-radius: 8px;
+            }
+
+            .nav-menu.mobile-active #profile-menu {
+                position: static;
+                box-shadow: none;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .nav-menu.mobile-active .btn-primary-nav,
+            .nav-menu.mobile-active .btn-secondary-nav {
+                width: 100%;
+                text-align: center;
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
+            .hero-title {
+                font-size: 2.2rem;
+            }
+
+            .map-container {
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 576px) {
+
+            .hero-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        .tab-btn.active-tab {
+            background-color: white;
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <header id="header">
+        <div class="max-w-6xl mx-auto px-5 w-full">
+            <div class="flex justify-between items-center py-2">
+                <div class="logo">
+                    <a href="/">
+                        <img src="../static/style/image/Logo-Forum-TBM.png" alt="Logo TBM" class="logo-img">
+                    </a>
+                </div>
+
+                <ul class="nav-menu hidden md:flex items-center list-none gap-[30px]">
+                    <li>
+                        <a href="#" class="active nav-link-icon">
+                            <i class="fas fa-home"></i>
+                            <span>Beranda</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="detail-wilayah.html" class="nav-link-icon">
+                            <i class="fas fa-search"></i>
+                            <span>Cari TBM</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-buttons-container hidden opacity-0 transition-opacity duration-300" id="auth-links">
+                        <button class="btn-secondary-nav" id="nav-login-btn">Masuk</button>
+                        <button class="btn-primary-nav" id="nav-register-btn">Daftar</button>
+                    </li>
+
+                    <li id="profile-dropdown" class="relative hidden opacity-0 transition-opacity duration-300">
+                        <button id="profile-btn"
+                            class="flex items-center gap-2 transition-transform duration-200 hover:scale-105">
+                            <span class="inline-block h-9 w-9 overflow-hidden rounded-full bg-gray-100">
+                                <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </span>
+                            <span id="profile-username" class="font-medium" style="color: var(--secondary);">Halo,
+                                User</span>
+                        </button>
+
+                        <div id="profile-menu"
+                            class="absolute right-0 mt-2 w-60 origin-top-right rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-30"
+                            style="font-family: 'Poppins', sans-serif;">
+                            <div class="py-1">
+                                <div class="border-b border-gray-200 px-4 py-3">
+                                    <p class="text-sm font-semibold" style="color: var(--dark);" id="menu-username">Nama
+                                        Pengguna</p>
+                                    <p class="truncate text-xs text-gray-500" id="menu-email">email@pengguna.com</p>
+                                </div>
+                                <a href="#" id="menu-dashboard-link"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-tachometer-alt w-4"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                                <a href="profil-pendaftar.html"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user-circle w-4"></i>
+                                    <span>Lihat Profil</span>
+                                </a>
+                                <button id="logout-btn"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt w-4"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <button class="mobile-menu-btn md:hidden">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="max-w-6xl mx-auto px-5 w-full">
+            <div class="flex flex-col-reverse lg:flex-row items-center justify-between relative z-10">
+                <div class="flex-1 max-w-xl text-center lg:text-left">
+                    <h1 class="hero-title">BERGERAK BERSAMA <span>FORUM TBM</span></h1>
+                    <p class="hero-description">
+                        Forum Taman Bacaan Masyarakat (TBM) adalah wadah bagi para pengelola dan pendiri TBM, pegiat
+                        literasi, komunitas, dan masyarakat untuk berorganisasi dan berkolaborasi.
+                    </p>
+
+                    <div class="hero-actions flex flex-col md:flex-row gap-4 justify-center lg:justify-start">
+                        <button class="primary-btn hidden" id="hero-daftar-btn">Daftar TBM Sekarang</button>
+
+                        <button class="primary-btn hidden" id="hero-dashboard-btn">
+                            <i class="fas fa-tachometer-alt" style="margin-right: 8px;"></i>
+                            Lihat Dashboard
+                        </button>
+                    </div>
+                    <div
+                        class="mt-6 flex flex-col sm:flex-row items-center sm:items-center gap-4 text-md font-semibold text-gray-600 justify-center lg:justify-start">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-shield-check h-5 w-5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>Verifikasi PD
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-shield-check h-5 w-5">
+                                <path
+                                    d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z">
+                                </path>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>Validasi PW
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-shield-check h-5 w-5">
+                                <path
+                                    d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0">
+                                </path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>Auto-provinsi
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-visual flex-1 flex justify-end mb-8 lg:mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+                        viewBox="0 0 256 256" xml:space="preserve"
+                        class="w-56 h-56 sm:w-64 sm:h-64 lg:w-80 lg:h-80 xl:w-[356px] xl:h-[356px]">
+                        <g style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;"
+                            transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">
+                            <path
+                                d="M 74.979 74.325 l 14.955 -48.803 c 0.244 -0.796 -0.204 -1.638 -0.999 -1.882 L 50.479 11.856 c -4.641 -1.422 -9.557 1.187 -10.979 5.828 L 24.58 66.374 l 1.453 0.445 l 0 0 l 0.002 0 l 1.451 0.445 l 0.067 -0.219 l 45.971 6.835 L 74.979 74.325 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(44,62,80); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 74.978 74.325 l -4.198 13.699 l -2.636 -0.808 L 30.784 75.767 c -3.783 -1.159 -5.91 -5.165 -4.75 -8.948 l 0 0 c 1.159 -3.783 5.165 -5.91 8.948 -4.75 l 29.681 9.095 L 74.978 74.325 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(223,232,242); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 70.336 89.477 L 30.339 77.221 c -4.578 -1.403 -7.161 -6.269 -5.758 -10.847 c 1.403 -4.578 6.269 -7.161 10.847 -5.758 l 39.997 12.256 l -0.891 2.906 L 34.536 63.522 c -2.975 -0.912 -6.138 0.767 -7.049 3.742 c -0.912 2.975 0.767 6.138 3.742 7.05 l 39.997 12.256 L 70.336 89.477 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(112,139,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 73.525 45.259 l -29.358 -8.996 c -0.774 -0.237 -1.209 -1.057 -0.972 -1.831 l 3.481 -11.36 c 0.237 -0.774 1.057 -1.209 1.831 -0.972 l 29.358 8.996 c 0.774 0.237 1.209 1.057 0.972 1.831 l -3.481 11.36 C 75.119 45.061 74.299 45.496 73.525 45.259 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(112,139,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 71.267 52.444 l -29.255 -8.965 c -0.803 -0.246 -1.254 -1.096 -1.008 -1.899 c 0.246 -0.803 1.096 -1.254 1.899 -1.008 l 29.255 8.965 c 0.803 0.246 1.254 1.096 1.008 1.899 S 72.07 52.69 71.267 52.444 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(112,139,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 69.263 58.983 l -29.255 -8.965 c -0.803 -0.246 -1.254 -1.096 -1.008 -1.899 c 0.246 -0.803 1.096 -1.254 1.899 -1.008 l 29.255 8.965 c 0.803 0.246 1.254 1.096 1.008 1.899 C 70.916 58.778 70.066 59.229 69.263 58.983 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(112,139,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 61.344 50.482 L 46.66 1.596 C 46.42 0.8 45.58 0.348 44.783 0.587 L 6.263 12.158 c -4.649 1.396 -7.286 6.297 -5.889 10.946 l 14.65 48.771 l 1.456 -0.437 l 0 0 l 0.002 -0.001 L 17.935 71 l -0.066 -0.219 l 42.018 -19.862 L 61.344 50.482 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(60,90,111); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 61.344 50.482 l 4.122 13.722 l -2.641 0.793 L 25.401 76.238 c -3.789 1.138 -7.783 -1.011 -8.922 -4.8 l 0 0 c -1.138 -3.789 1.011 -7.783 4.8 -8.922 l 29.731 -8.931 L 61.344 50.482 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(223,232,242); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 65.903 65.659 L 25.838 77.693 c -4.586 1.377 -9.437 -1.233 -10.815 -5.819 c -1.377 -4.585 1.233 -9.437 5.818 -10.814 l 40.064 -12.035 l 0.875 2.911 L 21.717 63.972 c -2.98 0.895 -4.677 4.048 -3.782 7.028 c 0.895 2.98 4.049 4.677 7.029 3.782 l 40.064 -12.035 L 65.903 65.659 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(103,140,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 43.984 27.123 l -29.407 8.833 c -0.775 0.233 -1.593 -0.207 -1.826 -0.982 L 9.333 23.595 c -0.233 -0.775 0.207 -1.593 0.982 -1.826 l 29.407 -8.833 c 0.775 -0.233 1.593 0.207 1.826 0.982 l 3.418 11.379 C 45.199 26.072 44.76 26.89 43.984 27.123 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(103,140,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 46.099 34.351 l -29.304 8.802 c -0.804 0.241 -1.651 -0.215 -1.893 -1.018 s 0.215 -1.651 1.018 -1.893 l 29.304 -8.802 c 0.804 -0.241 1.651 0.215 1.893 1.018 S 46.903 34.11 46.099 34.351 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(103,140,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                            <path
+                                d="M 48.067 40.902 l -29.304 8.802 c -0.804 0.241 -1.651 -0.215 -1.893 -1.018 s 0.215 -1.651 1.018 -1.893 l 29.304 -8.802 c 0.804 -0.241 1.651 0.215 1.893 1.018 S 48.871 40.66 48.067 40.902 z"
+                                style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(103,140,166); fill-rule: nonzero; opacity: 1;"
+                                transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-5 w-full">
+            <div class="animate-on-scroll">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl md:text-4xl font-bold text-[#2c3e50] mb-2">Peta Sebaran TBM</h2>
+                    <p class="text-gray-500">Pantau pertumbuhan dan persebaran TBM aktif di seluruh provinsi Indonesia
+                        secara real-time.</p>
+                </div>
+                <div id="map" class="map-container overflow-hidden"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section" id="faq">
+        <div class="max-w-6xl mx-auto px-5 w-full">
+            <div class="text-center mb-10 md:mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#2c3e50] text-center mb-4">Pertanyaan Umum</h2>
+                <p class="text-lg text-[#34495e] max-w-2xl mx-auto">
+                    Temukan jawaban untuk pertanyaan yang sering diajukan tentang pendaftaran TBM.
+                </p>
+            </div>
+
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Apa itu Taman Bacaan Masyarakat (TBM)?</h3>
+                        <div class="faq-icon">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Taman Bacaan Masyarakat (TBM) adalah lembaga yang menyediakan bahan bacaan dan mengembangkan
+                            kegiatan belajar masyarakat untuk menumbuhkan budaya baca dan belajar sepanjang hayat.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Bagaimana cara mendaftarkan TBM?</h3>
+                        <div class="faq-icon">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Pendaftaran TBM dapat dilakukan melalui sistem ini dengan mengisi formulir pendaftaran secara
+                            online. Setelah mengisi data lengkap, TBM akan melalui proses verifikasi bertahap oleh
+                            Pengurus Daerah, Pengurus Wilayah, dan Pengurus Pusat.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Berapa lama proses verifikasi TBM?</h3>
+                        <div class="faq-icon">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Proses verifikasi biasanya memakan waktu 2-4 minggu tergantung kelengkapan dokumen dan
+                            antrean verifikasi di masing-masing wilayah. Anda dapat memantau status pendaftaran melalui
+                            fitur "Cek Status Pendaftaran".</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Dokumen apa saja yang diperlukan untuk pendaftaran?</h3>
+                        <div class="faq-icon">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Dokumen yang diperlukan antara lain: foto TBM, profil pengelola, surat keterangan usaha (jika
+                            ada), dan dokumen pendukung lainnya. Panduan lengkap dapat diunduh melalui tombol di bawah.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="download-guide">
+                <a href="../static/style/document/panduan.pdf" download class="primary-btn">
+                    <i class="fas fa-download" style="margin-right: 8px;"></i>
+                    Unduh Panduan Lengkap (PDF)
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="max-w-6xl mx-auto px-5 w-full">
+
+            <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-10 mb-10">
+                <div class="footer-about">
+                    <div class="logo">
+                        <img src="../static/style/image/Logo-Forum-TBM.png" alt="Logo TBM" class="logo-img"
+                            style="height: 100px; padding: 8px 0;">
+                    </div>
+                    <p>
+                        TBM atau Taman Bacaan Masyarakat merupakan ruang membaca dan kecakapan literasi yang diinisiasi
+                        oleh dan untuk masyarakat.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-links-container">
+                    <h3 class="footer-heading">Tautan</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Beranda</a></li>
+                        <li><a href="detail-wilayah.html">Cari TBM</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links-container">
+                    <h3 class="footer-heading">Kontak</h3>
+                    <div class="space-y-3">
+                        <p class="flex items-start gap-2" style="color: rgba(255, 255, 255, 0.7);">
+                            <i class="fas fa-envelope mt-1" style="width: 16px;"></i>
+                            <span>redaksiforumtbm@gmail.com</span>
+                        </p>
+                        <p class="flex items-start gap-2" style="color: rgba(255, 255, 255, 0.7);">
+                            <i class="fas fa-phone mt-1" style="width: 16px;"></i>
+                            <span>081388213344</span>
+                        </p>
+                        <p class="flex items-start gap-2" style="color: rgba(255, 255, 255, 0.7);">
+                            <i class="fas fa-map-marker-alt mt-1" style="width: 16px;"></i>
+                            <span>Jalan Sukarajin 2 No. 15 Bandung, Jawa Barat, Indonesia</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 Forum TBM. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content-inner">
+            <span class="modal-close-btn" id="login-close-btn">&times;</span>
+            <div class="text-center">
+                <h2 class="text-3xl font-bold" style="color: var(--dark);">Selamat Datang</h2>
+                <p style="color: var(--secondary);">Login untuk melanjutkan ke dashboard Anda.</p>
+            </div>
+
+            <div class="mt-6 mb-6 grid grid-cols-2 gap-2 rounded-lg p-1" style="background-color: #e5e7eb;">
+                <button id="tab-pendaftar"
+                    class="tab-btn active-tab px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 text-center">
+                    Pendaftar / Pengurus
+                </button>
+                <button id="tab-pengurus"
+                    class="tab-btn px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 text-center">
+                    Anggota TBM
+                </button>
+            </div>
+
+            <form id="login-form" class="mt-8 space-y-6">
+
+                <div id="field-grup-pendaftar">
+                    <label for="login-email" class="text-sm font-medium" style="color: var(--secondary);">Email</label>
+                    <input id="login-email" name="email" type="email" autocomplete="email"
+                        placeholder="email@address.com" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
+                                focus:outline-none focus:border-soft-blue focus:ring-2 focus:ring-soft-blue/30
+                                transition duration-200">
+                </div>
+
+                <div id="field-grup-pengurus" class="hidden">
+                    <label for="login-nomor-anggota" class="text-sm font-medium" style="color: var(--secondary);">Nomor
+                        Anggota</label>
+                    <input id="login-nomor-anggota" name="nomor_anggota" type="text" autocomplete="username"
+                        placeholder="Cth: 350024.01-4001" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
+                                focus:outline-none focus:border-soft-blue focus:ring-2 focus:ring-soft-blue/30
+                                transition duration-200">
+                </div>
+
+                <div>
+                    <label for="login-password" class="text-sm font-medium"
+                        style="color: var(--secondary);">Password</label>
+                    <input id="login-password" name="password" type="password" autocomplete="current-password"
+                        placeholder="******" class=" mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm
+                        placeholder-gray-400 focus:outline-none focus:border-soft-blue focus:ring-2
+                        focus:ring-soft-blue/30 transition duration-200">
+                </div>
+
+                <div class="text-sm text-right">
+                    <a href="#" class="font-medium" style="color: var(--primary);">Lupa Password?</a>
+                </div>
+                <div>
+                    <button id="login-submit-button" type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent
+                                    rounded-lg shadow-sm text-lg font-medium text-white
+                                    hover:shadow-lg hover:scale-[1.02]
+                                    focus:outline-none focus:ring-2 focus:ring-offset-2
+                                    transition-all duration-300 ease-in-out"
+                        style="background-color: var(--primary); box-shadow: 0 4px 15px rgba(91, 134, 164, 0.3);">
+                        <span id="login-button-text">Login</span>
+                        <svg id="login-button-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="login-alert-message" class="text-center text-sm hidden"></div>
+                <p class="text-center text-sm" style="color: var(--secondary);">
+                    Belum punya akun?
+                    <a href="#" id="show-register-link" class="font-medium" style="color: var(--primary);">Daftar di
+                        sini</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <div id="register-modal" class="modal-overlay">
+        <div class="modal-content-inner">
+            <span class="modal-close-btn" id="register-close-btn">&times;</span>
+            <div class="text-center">
+                <h2 class="text-3xl font-bold" style="color: var(--dark);">Buat Akun Anda</h2>
+                <p style="color: var(--secondary);">Gabung untuk mendaftarkan TBM Anda.</p>
+            </div>
+            <form id="registration-form" class="mt-4 space-y-6">
+                <div>
+                    <label for="reg-username" class="text-sm font-medium"
+                        style="color: var(--secondary);">Username</label>
+                    <input id="reg-username" name="username" type="text" placeholder="Masukkan username" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
+                                focus:outline-none focus:border-soft-blue focus:ring-2 focus:ring-soft-blue/30
+                                transition duration-200">
+                </div>
+                <div>
+                    <label for="reg-email" class="text-sm font-medium" style="color: var(--secondary);">Email</label>
+                    <input id="reg-email" name="email" type="email" autocomplete="email" placeholder="email@address.com"
+                        required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
+                                focus:outline-none focus:border-soft-blue focus:ring-2 focus:ring-soft-blue/30
+                                transition duration-200">
+                </div>
+                <div>
+                    <label for="reg-password" class="text-sm font-medium"
+                        style="color: var(--secondary);">Password</label>
+                    <input id="reg-password" name="password" type="password" autocomplete="new-password"
+                        placeholder="******" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
+                                focus:outline-none focus:border-soft-blue focus:ring-2 focus:ring-soft-blue/30
+                                transition duration-200">
+                </div>
+                <div>
+                    <label for="reg-confirm-password" class="text-sm font-medium"
+                        style="color: var(--secondary);">Konfirmasi Password</label>
+                    <input id="reg-confirm-password" name="confirm-password" type="password" autocomplete="new-password"
+                        placeholder="******" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
+                                focus:outline-none focus:border-soft-blue focus:ring-2 focus:ring-soft-blue/30
+                                transition duration-200">
+                </div>
+                <div>
+                    <button id="reg-submit-button" type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent
+                                        rounded-lg shadow-sm text-lg font-medium text-white
+                                        hover:shadow-lg hover:scale-[1.02]
+                                        focus:outline-none focus:ring-2 focus:ring-offset-2
+                                        transition-all duration-300 ease-in-out"
+                        style="background-color: var(--primary); box-shadow: 0 4px 15px rgba(91, 134, 164, 0.3);">
+                        <span id="reg-button-text">Buat Akun</span>
+                        <svg id="reg-button-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="reg-alert-message" class="text-center text-sm hidden"></div>
+                <p class="text-center text-sm" style="color: var(--secondary);">
+                    Sudah punya akun?
+                    <a href="#" id="show-login-link" class="font-medium" style="color: var(--primary);">Login di
+                        sini</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script src="../static/style/js/config.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            // 1. JALANKAN CEK SESI PENGGUNA
+            if (typeof checkUserSession === 'function') checkUserSession();
+
+            // 2. Header scroll effect
+            window.addEventListener('scroll', function () {
+                const header = document.getElementById('header');
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            // 3. FAQ Accordion
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    const isActive = item.classList.contains('active');
+                    faqItems.forEach(otherItem => {
+                        otherItem.classList.remove('active');
+                    });
+                    if (!isActive) {
+                        item.classList.toggle('active');
+                    }
+                });
+            });
+
+            // 4. Mobile menu toggle
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const navMenu = document.querySelector('.nav-menu');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    navMenu.classList.toggle('mobile-active');
+                    const icon = mobileMenuBtn.querySelector('i');
+                    if (navMenu.classList.contains('mobile-active')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                });
+            }
+
+            // ==========================================
+            // 5. HIGHCHARTS MAPS IMPLEMENTATION (REAL-TIME DB)
+            // ==========================================
+
+            function normalizeProvinceName(name) {
+                if (!name) return '';
+                return name.toLowerCase()
+                    .replace('provinsi ', '')
+                    .replace('dki ', '')
+                    .replace('daerah istimewa ', '')
+                    .replace('di ', '')
+                    .replace('kepulauan ', '')
+                    .replace('kep. ', '')
+                    .replace(/\./g, '')
+                    .trim();
+            }
+
+            try {
+                const topology = await fetch('../static/style/json/geo.json')
+                    .then(response => response.json());
+
+                // Ambil Data TBM Aktif (Status 5_AKTIF)
+                const { data: tbmData, error } = await _supabase
+                    .from('tbm')
+                    .select('provinsi_nama')
+                    .eq('status', '5_AKTIF'); // Perubahan: 5_AKTIF
+
+                if (error) throw error;
+
+                const tbmCounts = {};
+                if (tbmData) {
+                    tbmData.forEach(tbm => {
+                        if (tbm.provinsi_nama) {
+                            const normalizedName = normalizeProvinceName(tbm.provinsi_nama);
+                            tbmCounts[normalizedName] = (tbmCounts[normalizedName] || 0) + 1;
+                        }
+                    });
+                }
+
+                const data = topology.features.map((feature, index) => {
+                    const p = feature.properties;
+                    const rawProvinceName = p.PROVINSI || p.name || p.NAME_1 || p.WADMPR || p.NAMOBJ || p.provinsi || `Wilayah ${index + 1}`;
+                    const normalizedGeoName = normalizeProvinceName(rawProvinceName);
+                    const realCount = tbmCounts[normalizedGeoName] || 0;
+
+                    return {
+                        geometry: feature.geometry,
+                        name: rawProvinceName,
+                        value: realCount,
+                    };
+                });
+
+                Highcharts.mapChart('map', {
+                    chart: {
+                        map: topology,
+                        backgroundColor: 'transparent',
+                        marginTop: 0,
+                        marginBottom: 0
+                    },
+                    title: { text: '' },
+                    exporting: { enabled: false },
+                    accessibility: { enabled: false },
+                    mapNavigation: {
+                        enabled: true,
+                        enableDoubleClickZoom: true,
+                        enableButtons: false
+                    },
+                    colors: [
+                        '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+                        '#F7DC6F', '#BB8FCE', '#F1948A', '#82E0AA', '#85C1E9',
+                        '#D2B4DE', '#F5B7B1', '#A9DFBF', '#AED6F1', '#F9E79F',
+                        '#E59866', '#2ECC71', '#3498DB', '#9B59B6', '#E74C3C'
+                    ],
+                    legend: { enabled: false },
+                    credits: { enabled: false },
+                    series: [{
+                        data: data,
+                        name: 'Jumlah TBM',
+                        type: 'map',
+                        colorByPoint: true,
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: function () {
+                                    const urlName = encodeURIComponent(this.name);
+                                    window.location.href = `detail-wilayah.html?provinsi=${urlName}`;
+                                }
+                            }
+                        }
+                    }],
+                    tooltip: {
+                        useHTML: true,
+                        headerFormat: '',
+                        pointFormat: '<div style="text-align: center;"><b>{point.name}</b><br>Jumlah TBM: {point.value}<br><span style="font-size:10px; color:#ddd">(Klik untuk detail)</span></div>',
+                        style: { fontSize: '14px' }
+                    },
+                    plotOptions: {
+                        map: {
+                            allAreas: false,
+                            joinBy: null,
+                            dataLabels: {
+                                enabled: true,
+                                format: '{point.name}',
+                                allowOverlap: false,
+                                overflow: 'justify',
+                                style: {
+                                    color: '#f8f9fa',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold',
+                                    textOutline: '1px #2c2c2c'
+                                }
+                            },
+                            states: {
+                                hover: {
+                                    color: '#6EA4BA',
+                                    borderColor: '#466E80',
+                                    borderWidth: 2
+                                }
+                            },
+                            borderWidth: 0.5,
+                            borderColor: '#464a47'
+                        }
+                    },
+                });
+
+            } catch (err) {
+                console.error("Gagal memuat peta sebaran:", err);
+                document.getElementById('map').innerHTML = `<p class="text-center text-red-500 mt-10">Gagal memuat data peta (${err.message}).</p>`;
+            }
+        });
+
+        // --- LOGIKA LOGIN/REGISTER ---
+        const authLinks = document.getElementById('auth-links');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        const profileBtn = document.getElementById('profile-btn');
+        const profileMenu = document.getElementById('profile-menu');
+        const logoutBtn = document.getElementById('logout-btn');
+        const menuUsername = document.getElementById('menu-username');
+        const menuEmail = document.getElementById('menu-email');
+        const profileUsername = document.getElementById('profile-username');
+        const menuDashboardLink = document.getElementById('menu-dashboard-link'); // ID Baru
+        const heroDaftarBtn = document.getElementById('hero-daftar-btn');
+        const heroDashboardBtn = document.getElementById('hero-dashboard-btn');
+        const tabPendaftar = document.getElementById('tab-pendaftar');
+        const tabPengurus = document.getElementById('tab-pengurus'); // Sekarang TAB Anggota TBM
+        const fieldGrupPendaftar = document.getElementById('field-grup-pendaftar');
+        const fieldGrupPengurus = document.getElementById('field-grup-pengurus');
+        const inputEmail = document.getElementById('login-email');
+        const inputNomorAnggota = document.getElementById('login-nomor-anggota');
+
+        // Tab Logic
+        if (tabPendaftar) {
+            tabPendaftar.addEventListener('click', () => {
+                tabPendaftar.classList.add('active-tab');
+                tabPengurus.classList.remove('active-tab');
+                fieldGrupPendaftar.classList.remove('hidden');
+                fieldGrupPengurus.classList.add('hidden');
+                inputEmail.required = true;
+                inputNomorAnggota.required = false;
+            });
+        }
+        if (tabPengurus) {
+            tabPengurus.addEventListener('click', () => {
+                tabPengurus.classList.add('active-tab');
+                tabPendaftar.classList.remove('active-tab');
+                fieldGrupPengurus.classList.remove('hidden');
+                fieldGrupPendaftar.classList.add('hidden');
+                inputNomorAnggota.required = true;
+                inputEmail.required = false;
+            });
+        }
+
+        // Auth Check & UI Update
+        async function checkUserSession() {
+            try {
+                const { data: { session } } = await _supabase.auth.getSession();
+                if (session && session.user) {
+                    const user = session.user;
+                    const { data: profile } = await _supabase.from('user_profiles').select('username, role').eq('id', user.id).single();
+                    const username = profile ? profile.username : 'Pengguna';
+                    const userRole = profile ? profile.role : 'PENDAFTAR';
+
+                    if (profileDropdown) {
+                        profileDropdown.classList.remove('hidden');
+                        requestAnimationFrame(() => profileDropdown.classList.remove('opacity-0'));
+                    }
+                    if (authLinks) {
+                        authLinks.classList.add('hidden');
+                        authLinks.classList.add('opacity-0');
+                    }
+                    if (menuUsername) menuUsername.textContent = username;
+                    if (profileUsername) profileUsername.textContent = `Halo, ${username}`;
+                    if (menuEmail) menuEmail.textContent = user.email;
+
+                    // Tentukan Link Dashboard Berdasarkan Role
+                    let dashboardUrl = 'index.html';
+                    if (userRole === 'PENDAFTAR') dashboardUrl = 'dashboard-pendaftar.html';
+                    else if (userRole === 'TBM') dashboardUrl = 'dashboard-anggota.html';
+                    else if (userRole === 'PD') dashboardUrl = 'dashboard-pd.html';
+                    else if (userRole === 'PW') dashboardUrl = 'dashboard-pw.html';
+                    else if (userRole === 'PP') dashboardUrl = 'dashboard-pp.html';
+                    else if (userRole === 'ADMIN') dashboardUrl = 'dashboard-admin.html';
+
+                    // Update tombol dashboard di menu & hero
+                    if (menuDashboardLink) menuDashboardLink.href = dashboardUrl;
+
+                    if (heroDashboardBtn) {
+                        heroDashboardBtn.classList.remove('hidden');
+                        requestAnimationFrame(() => heroDashboardBtn.classList.remove('opacity-0'));
+                        heroDashboardBtn.onclick = () => window.location.href = dashboardUrl;
+                    }
+                    if (heroDaftarBtn) {
+                        heroDaftarBtn.classList.add('hidden');
+                        heroDaftarBtn.classList.add('opacity-0');
+                    }
+                } else {
+                    if (authLinks) {
+                        authLinks.classList.remove('hidden');
+                        requestAnimationFrame(() => authLinks.classList.remove('opacity-0'));
+                    }
+                    if (profileDropdown) {
+                        profileDropdown.classList.add('hidden');
+                        profileDropdown.classList.add('opacity-0');
+                    }
+                    if (heroDaftarBtn) {
+                        heroDaftarBtn.classList.remove('hidden');
+                        requestAnimationFrame(() => heroDaftarBtn.classList.remove('opacity-0'));
+                    }
+                    if (heroDashboardBtn) {
+                        heroDashboardBtn.classList.add('hidden');
+                        heroDashboardBtn.classList.add('opacity-0');
+                    }
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        // Navbar Event Listeners
+        if (profileBtn) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileMenu.classList.toggle('hidden');
+            });
+        }
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                logoutBtn.disabled = true;
+                logoutBtn.textContent = "Logging out...";
+                await _supabase.auth.signOut();
+                window.location.replace('index.html');
+            });
+        }
+        window.addEventListener('click', (e) => {
+            if (profileMenu && !profileMenu.classList.contains('hidden') && !profileDropdown.contains(e.target)) {
+                profileMenu.classList.add('hidden');
+            }
+        });
+
+        // Modal Logic
+        const loginModal = document.getElementById('login-modal');
+        const registerModal = document.getElementById('register-modal');
+        function showModal(modal) { if (modal) modal.classList.add('active'); }
+        function hideModal(modal) { if (modal) modal.classList.remove('active'); }
+
+        document.getElementById('nav-login-btn').addEventListener('click', () => showModal(loginModal));
+        document.getElementById('nav-register-btn').addEventListener('click', () => showModal(registerModal));
+        document.getElementById('hero-daftar-btn').addEventListener('click', () => showModal(registerModal));
+        document.getElementById('login-close-btn').addEventListener('click', () => hideModal(loginModal));
+        document.getElementById('register-close-btn').addEventListener('click', () => hideModal(registerModal));
+
+        document.getElementById('show-register-link').addEventListener('click', (e) => {
+            e.preventDefault(); hideModal(loginModal); showModal(registerModal);
+        });
+        document.getElementById('show-login-link').addEventListener('click', (e) => {
+            e.preventDefault(); hideModal(registerModal); showModal(loginModal);
+        });
+
+        // --- HANDLE LOGIN ---
+        const loginForm = document.getElementById('login-form');
+        const loginSubmitButton = document.getElementById('login-submit-button');
+        const loginAlertMessage = document.getElementById('login-alert-message');
+        const loginButtonSpinner = document.getElementById('login-button-spinner');
+        const loginButtonText = document.getElementById('login-button-text');
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            // Reset UI
+            loginSubmitButton.disabled = true;
+            loginButtonText.classList.add('hidden');
+            loginButtonSpinner.classList.remove('hidden');
+            loginAlertMessage.classList.add('hidden');
+
+            const isEmailLogin = tabPendaftar.classList.contains('active-tab'); // Tab Kiri (Umum/Pengurus)
+            const password = loginForm.password.value;
+
+            let emailToLogin = "";
+
+            // TENTUKAN EMAIL BERDASARKAN TAB
+            if (isEmailLogin) {
+                // Tab 1: Email Langsung
+                emailToLogin = loginForm.email.value;
+            } else {
+                // Tab 2: Nomor Anggota -> Konversi ke Email Dummy
+                const nomorAnggota = loginForm.nomor_anggota.value.trim();
+                if (!nomorAnggota) {
+                    showLoginError("Nomor Anggota wajib diisi.");
+                    return;
+                }
+                // Format Email Dummy: [NOMOR]@tbm.id
+                emailToLogin = `${nomorAnggota}@tbm.id`;
+            }
+
+            try {
+                // 1. Login ke Supabase Auth
+                const { data: loginData, error: loginError } = await _supabase.auth.signInWithPassword({
+                    email: emailToLogin,
+                    password: password
+                });
+
+                if (loginError) throw new Error(loginError.message);
+
+                // 2. Cek Role di Database
+                const { data: profileData, error: profileError } = await _supabase
+                    .from('user_profiles')
+                    .select('role')
+                    .eq('id', loginData.user.id)
+                    .single();
+
+                if (profileError) throw new Error("Gagal memuat profil pengguna.");
+
+                // 3. Validasi Login vs Role Tab
+                // Jika login di tab Anggota tapi role bukan TBM, atau sebaliknya (Opsional, tapi bagus UX-nya)
+                // Di sini kita biarkan fleksibel, yang penting redirectnya benar.
+
+                loginAlertMessage.textContent = 'Login berhasil! Mengarahkan...';
+                loginAlertMessage.className = 'text-center text-sm text-green-600';
+                loginAlertMessage.classList.remove('hidden');
+
+                setTimeout(() => {
+                    const role = profileData ? profileData.role : 'PENDAFTAR';
+
+                    // ROUTING BERDASARKAN ROLE
+                    if (role === 'PENDAFTAR') window.location.href = 'dashboard-pendaftar.html';
+                    else if (role === 'TBM') window.location.href = 'dashboard-anggota.html';
+                    else if (role === 'PD') window.location.href = 'dashboard-pd.html';
+                    else if (role === 'PW') window.location.href = 'dashboard-pw.html';
+                    else if (role === 'PP') window.location.href = 'dashboard-pp.html';
+                    else if (role === 'ADMIN') window.location.href = 'dashboard-admin.html';
+                    else window.location.href = 'index.html';
+                }, 1000);
+
+            } catch (error) {
+                let msg = error.message;
+                if (msg === 'Invalid login credentials') {
+                    msg = isEmailLogin ? 'Email atau Password salah.' : 'Nomor Anggota atau Password salah.';
+                }
+                showLoginError(msg);
+            }
+        });
+
+        function showLoginError(msg) {
+            loginAlertMessage.textContent = msg;
+            loginAlertMessage.className = 'text-center text-sm text-red-600';
+            loginAlertMessage.classList.remove('hidden');
+            loginSubmitButton.disabled = false;
+            loginButtonText.classList.remove('hidden');
+            loginButtonSpinner.classList.add('hidden');
+        }
+
+        // --- HANDLE REGISTER (PENDAFTAR SAJA) ---
+        const regForm = document.getElementById('registration-form');
+        const regSubmitButton = document.getElementById('reg-submit-button');
+        const regAlertMessage = document.getElementById('reg-alert-message');
+        const regButtonSpinner = document.getElementById('reg-button-spinner');
+        const regButtonText = document.getElementById('reg-button-text');
+
+        regForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            regSubmitButton.disabled = true;
+            regButtonText.classList.add('hidden');
+            regButtonSpinner.classList.remove('hidden');
+            regAlertMessage.classList.add('hidden');
+
+            const username = regForm.username.value;
+            const email = regForm.email.value;
+            const password = regForm.password.value;
+            const confirmPassword = regForm['confirm-password'].value;
+
+            if (password !== confirmPassword) {
+                showRegisterError('Password tidak cocok.');
+                return;
+            }
+
+            try {
+                const { error } = await _supabase.auth.signUp({
+                    email, password, options: { data: { username } }
+                });
+                if (error) throw error;
+
+                regAlertMessage.textContent = 'Akun berhasil dibuat! Silakan login.';
+                regAlertMessage.className = 'text-center text-sm text-green-600';
+                regAlertMessage.classList.remove('hidden');
+                regForm.reset();
+                setTimeout(() => {
+                    hideModal(registerModal);
+                    showModal(loginModal);
+                    regSubmitButton.disabled = false;
+                    regButtonText.classList.remove('hidden');
+                    regButtonSpinner.classList.add('hidden');
+                }, 1500);
+            } catch (error) {
+                showRegisterError(error.message);
+            }
+        });
+
+        function showRegisterError(msg) {
+            regAlertMessage.textContent = msg;
+            regAlertMessage.className = 'text-center text-sm text-red-600';
+            regAlertMessage.classList.remove('hidden');
+            regSubmitButton.disabled = false;
+            regButtonText.classList.remove('hidden');
+            regButtonSpinner.classList.add('hidden');
+        }
+
+    </script>
+</body>
+
+</html>

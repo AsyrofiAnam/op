@@ -1,0 +1,6 @@
+.vercel
+.env
+config.js
+node_modules
+command.txt
+sql

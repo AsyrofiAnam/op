@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/", "destination": "/templates/index.html" },
+    { "source": "/index.html", "destination": "/templates/index.html" },
+    { "source": "/daftar-tbm.html", "destination": "/templates/daftar-tbm.html" },
+    { "source": "/edit-tbm.html", "destination": "/templates/edit-tbm.html" },
+    { "source": "/dashboard-pendaftar.html", "destination": "/templates/dashboard-pendaftar.html" },
+    { "source": "/dashboard-pd.html", "destination": "/templates/dashboard-pd.html" },
+    { "source": "/dashboard-pw.html", "destination": "/templates/dashboard-pw.html" },
+    { "source": "/dashboard-pp.html", "destination": "/templates/dashboard-pp.html" },
+    { "source": "/dashboard-tbm.html", "destination": "/templates/dashboard-tbm.html" },
+    { "source": "/dashboard-admin.html", "destination": "/templates/dashboard-admin.html" },
+    { "source": "/detail-wilayah.html", "destination": "/templates/detail-wilayah.html" },
+    { "source": "/detail-tbm.html", "destination": "/templates/detail-tbm.html" },
+    { "source": "/profil-pendaftar.html", "destination": "/templates/profil-pendaftar.html" }
+  ]
+}

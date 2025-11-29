@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail TBM - Forum TBM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary: #5B86A4;
+            --secondary: #34495e;
+            --dark: #2c3e50;
+            --light: #F9FAFB;
+            --accent: #4CA1AF;
+            --gradient: linear-gradient(135deg, #5B86A4 0%, #4CA1AF 100%);
+        }
+
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            padding-top: 75px;
+        }
+
+        /* --- Style Header --- */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-img {
+            height: 50px;
+        }
+
+        /* --- Style Tombol --- */
+        .primary-btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(91, 134, 164, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(91, 134, 164, 0.4);
+        }
+
+        .secondary-btn {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(91, 134, 164, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* --- Style Kartu Detail --- */
+        .detail-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .detail-card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--primary);
+        }
+
+        .detail-card-header i {
+            font-size: 1.25rem;
+            width: 28px;
+            text-align: center;
+        }
+
+        .detail-card-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .detail-card-body {
+            padding: 1.5rem;
+        }
+
+        /* --- Style Item Detail (Label + Value) --- */
+        .detail-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .detail-item:first-child {
+            padding-top: 0;
+        }
+
+        .detail-item dt {
+            /* Label */
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            /* text-gray-500 */
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-item dd {
+            /* Value */
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* --- Style Daftar (untuk Checkbox) --- */
+        .detail-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .detail-list li {
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .detail-list li::before {
+            content: '\f00c';
+            /* FontAwesome Check */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--accent);
+            position: absolute;
+            left: 0;
+            top: 2px;
+        }
+
+        .detail-list.empty-list li::before {
+            content: '\f00d';
+            /* FontAwesome Times/X */
+            color: #9ca3af;
+            /* text-gray-400 */
+        }
+
+        .detail-list.empty-list li {
+            font-style: italic;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+
+        /* --- Style Status Badge (Sesuai Dashboard) --- */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-baru {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+        }
+
+        .status-draft {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+
+        .status-aktif {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .status-ditolak {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-baru .dot {
+            background-color: #f59e0b;
+        }
+
+        .status-draft .dot {
+            background-color: #9ca3af;
+        }
+
+        .status-aktif .dot {
+            background-color: #10b981;
+        }
+
+        .status-ditolak .dot {
+            background-color: #ef4444;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--secondary);
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+        }
+
+        .nav-link-icon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link-icon i {
+            font-size: 1rem;
+        }
+
+        .nav-link-icon span {
+            display: inline-block;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0px;
+            left: 0;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .nav-buttons-container {
+            display: flex;
+            gap: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header id="header">
+        <div class="max-w-6xl mx-auto px-5 w-full">
+            <div class="flex justify-between items-center py-2">
+                <div class="logo">
+                    <a href="index.html">
+                        <img src="../static/style/image/Logo-Forum-TBM.png" alt="Logo TBM" class="logo-img">
+                    </a>
+                </div>
+                <ul class="nav-menu flex items-center list-none">
+                    <li id="profile-dropdown" class="relative">
+                        <button id="profile-btn" class="flex items-center gap-2">
+                            <span class="inline-block h-9 w-9 overflow-hidden rounded-full bg-gray-100">
+                                <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </span>
+                            <span id="profile-username" class="font-medium"
+                                style="color: var(--secondary);">Memuat...</span>
+                        </button>
+                        <div id="profile-menu"
+                            class="absolute right-0 mt-2 w-60 origin-top-right rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-30">
+                            <div class="py-1">
+                                <div class="border-b border-gray-200 px-4 py-3">
+                                    <p class="text-sm font-semibold" style="color: var(--dark);" id="menu-username">
+                                        Memuat...</p>
+                                    <p class="truncate text-xs text-gray-500" id="menu-email">Memuat...</p>
+                                </div>
+                                <a href="index.html"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i
+                                        class="fas fa-home w-4"></i><span>Beranda</span></a>
+                                <a href="dashboard-pendaftar.html"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i
+                                        class="fas fa-tachometer-alt w-4"></i><span>Dashboard</span></a>
+                                <button id="logout-btn"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"><i
+                                        class="fas fa-sign-out-alt w-4"></i><span>Logout</span></button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-5 w-full py-10 md:py-16">
+
+        <div class="mb-10">
+            <h1 class="text-4xl font-bold" style="color: var(--dark);" id="nama-tbm-header">
+                Memuat Detail TBM...
+            </h1>
+            <p class="text-xl mt-1" style="color: var(--secondary);">
+                Lihat semua informasi yang telah Anda kirimkan.
+            </p>
+        </div>
+
+        <div id="loading-state" class="text-center py-20">
+            <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--primary);"></i>
+            <p class="mt-4 text-xl" style="color: var(--secondary);">Memuat data TBM...</p>
+        </div>
+
+        <div id="error-state" class="hidden text-center py-20 bg-white rounded-xl shadow-lg">
+            <i class="fas fa-exclamation-triangle fa-3x text-red-500"></i>
+            <h2 class="mt-4 text-2xl font-bold" style="color: var(--dark);">Data TBM Tidak Ditemukan</h2>
+            <p class="mt-2 text-lg" style="color: var(--secondary);">TBM yang Anda cari tidak ditemukan atau Anda tidak
+                memiliki izin untuk melihatnya.</p>
+            <a href="dashboard-pendaftar.html" class="primary-btn mt-6">
+                <i class="fas fa-arrow-left"></i>
+                Kembali ke Dashboard
+            </a>
+        </div>
+
+        <div id="detail-content" class="hidden grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+
+            <div class="lg:col-span-1 lg:sticky lg:top-24 h-fit">
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h2>Status Pendaftaran</h2>
+                    </div>
+                    <div class="detail-card-body space-y-4" id="detail-status">
+                        </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-user"></i>
+                        <h2>Bagian 1: Info Pendaftar</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-pendaftar">
+                    </div>
+                </div>
+
+            </div>
+            <div class="lg:col-span-2">
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-handshake"></i>
+                        <h2>Bagian 2: Informasi Referensi</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-step-2">
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h2>Bagian 3: Informasi Umum TBM</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-step-3">
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-building"></i>
+                        <h2>Bagian 4: Informasi Kelembagaan</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-step-4">
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-tasks"></i>
+                        <h2>Bagian 5: Program & Pengelolaan</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-step-5">
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-users"></i>
+                        <h2>Bagian 6: Tentang Forum TBM</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-step-6">
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-chart-line"></i>
+                        <h2>Bagian 7: Pengembangan Kapasitas</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-step-7">
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-check-double"></i>
+                        <h2>Bagian 8: Validasi & Pernyataan</h2>
+                    </div>
+                    <div class="detail-card-body" id="detail-step-8">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../static/style/js/config.js"></script>
+
+    <script>
+        // === Elemen Global ===
+        const profileBtn = document.getElementById('profile-btn');
+        const profileMenu = document.getElementById('profile-menu');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        const logoutBtn = document.getElementById('logout-btn');
+        const navProfileUsername = document.getElementById('profile-username');
+        const navMenuUsername = document.getElementById('menu-username');
+        const navMenuEmail = document.getElementById('menu-email');
+
+        // Elemen Halaman
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const detailContent = document.getElementById('detail-content');
+        const tbmHeader = document.getElementById('nama-tbm-header');
+
+        // Variabel global
+        let currentUser = null;
+        let tbmId = null;
+
+        // === Inisialisasi Halaman ===
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Dapatkan TBM ID dari URL
+            const urlParams = new URLSearchParams(window.location.search);
+            tbmId = urlParams.get('id');
+            if (!tbmId) {
+                showError("ID TBM tidak ditemukan di URL.");
+                return;
+            }
+
+            // 2. Auth Guard & Pemuatan Profil
+            const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+            if (sessionError || !session) {
+                window.location.replace('index.html');
+                return;
+            }
+            currentUser = session.user;
+
+            // 3. Muat data
+            await Promise.all([
+                loadUserProfile(currentUser.id),
+                loadTbmDetails(tbmId, currentUser.id)
+            ]);
+
+            // 4. Atur Event Listener
+            setupEventListeners();
+        });
+
+        // --- Fungsi Pemuatan Data ---
+
+        async function loadUserProfile(userId) {
+            try {
+                const { data: profile, error } = await _supabase
+                    .from('user_profiles')
+                    .select('username')
+                    .eq('id', userId)
+                    .single();
+                if (error) throw error;
+
+                navProfileUsername.textContent = `Halo, ${profile.username}`;
+                navMenuUsername.textContent = profile.username;
+                navMenuEmail.textContent = currentUser.email;
+            } catch (error) {
+                console.error('Error memuat profil:', error.message);
+                navProfileUsername.textContent = 'Halo, Pengguna';
+            }
+        }
+
+        async function loadTbmDetails(tbmId, userId) {
+            try {
+                const { data: tbm, error } = await _supabase
+                    .from('tbm')
+                    .select('*')
+                    .eq('id', tbmId)
+                    .eq('user_pendaftar_id', userId) // Keamanan: Pastikan user ini pemiliknya
+                    .single();
+
+                if (error || !tbm) {
+                    throw new Error(error?.message || "TBM tidak ditemukan atau Anda tidak memiliki akses.");
+                }
+
+                // Sukses: Render data
+                renderTbmData(tbm);
+
+                // Tampilkan konten
+                loadingState.classList.add('hidden');
+                errorState.classList.add('hidden');
+                detailContent.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error memuat detail TBM:', error.message);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            loadingState.classList.add('hidden');
+            detailContent.classList.add('hidden');
+            errorState.classList.remove('hidden');
+            errorState.querySelector('p').textContent = message;
+        }
+
+        // --- Fungsi Rendering ---
+
+        function renderTbmData(tbm) {
+            // Set Header
+            tbmHeader.textContent = tbm.nama_tbm || 'Draft TBM';
+
+            // Render Sidebar
+            renderSidebarStatus(tbm);
+            renderPendaftarInfo(tbm);
+
+            // Render Detail per Bagian
+            renderStep3(tbm);
+            renderStep4(tbm);
+            renderStep5(tbm);
+            renderStep6(tbm);
+            renderStep7(tbm);
+            renderStep8(tbm);
+            renderStep2(tbm); // Step 1 ada di sidebar
+        }
+
+        function renderDetailItem(label, value) {
+            const formatShortDate = (dateString) => {
+                if (!dateString) return null;
+                try {
+                    return new Date(dateString).toLocaleDateString('id-ID', {
+                        day: 'numeric', month: 'long', year: 'numeric'
+                    });
+                } catch (e) {
+                    return dateString;
+                }
+            };
+
+            let displayValue = value;
+            if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                displayValue = formatShortDate(value);
+            }
+
+            if (typeof value === 'boolean') {
+                displayValue = value ? 'Ya' : 'Tidak';
+            }
+
+            const val = (displayValue && displayValue.toString().trim() !== "") ? displayValue : '<span class="text-gray-400 italic">Tidak diisi</span>';
+            return `
+                <div class="detail-item">
+                    <dt>${label}</dt>
+                    <dd>${val}</dd>
+                </div>
+            `;
+        }
+
+        function renderList(label, items) {
+            let listHtml = '';
+            if (items && items.length > 0) {
+                listHtml = `<ul class="detail-list">${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+            } else {
+                listHtml = `<ul class="detail-list empty-list"><li>Tidak ada data</li></ul>`;
+            }
+
+            return `
+                <div class="detail-item">
+                    <dt>${label}</dt>
+                    <dd>${listHtml}</dd>
+                </div>
+            `;
+        }
+
+        function renderSidebarStatus(tbm) {
+            const container = document.getElementById('detail-status');
+            let badgeHtml = '';
+            let infoStatus = '';
+
+            switch (tbm.status) {
+                case '1_DRAFT':
+                    badgeHtml = `<span class="status-badge status-draft"><span class="dot"></span>Draft</span>`;
+                    infoStatus = `<p class="text-sm text-gray-600 mt-2">Data belum dikirim. Anda masih bisa mengeditnya di Dashboard.</p>`;
+                    break;
+
+                case '2_BARU':
+                    badgeHtml = `<span class="status-badge status-baru"><span class="dot"></span>Verifikasi PD</span>`;
+                    infoStatus = `<p class="mt-2 text-sm text-gray-600 bg-yellow-50 p-3 rounded border border-yellow-100">
+                        <i class="fas fa-clock mr-1"></i> Menunggu verifikasi kelengkapan data oleh Pengurus Daerah (PD).</p>`;
+                    break;
+
+                case '3_DISETUJUI':
+                    badgeHtml = `<span class="status-badge status-baru" style="background-color:#e0f2fe; color:#0369a1; border-color:#bae6fd;">
+                        <span class="dot" style="background-color:#0ea5e9;"></span>Validasi PW</span>`;
+                    infoStatus = `<p class="mt-2 text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-100">
+                        <i class="fas fa-check-circle mr-1"></i> Data telah disetujui oleh Pengurus Daerah (PD). Menunggu validasi akhir sebelum penerbitan SK dan Kartu Digital oleh Pengurus Wilayah (PW).</p>`;
+                    break;
+
+                case '5_AKTIF':
+                    badgeHtml = `<span class="status-badge status-aktif"><span class="dot"></span>Resmi / Aktif</span>`;
+                    infoStatus = `
+                        <div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <p class="text-sm text-green-800 uppercase font-bold mb-1">Nomor Anggota:</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-mono font-bold text-gray-800">${tbm.nomor_anggota_tbm || '-'}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">TBM Anda resmi terdaftar.</p>
+                        </div>`;
+                    break;
+
+                case '4_DITOLAK':
+                    badgeHtml = `<span class="status-badge status-ditolak"><span class="dot"></span>Ditolak</span>`;
+                    // Logic mengambil alasan penolakan (bisa dari PD, PW, atau PP)
+                    const alasan = tbm.catatan_pd || tbm.catatan_pw || tbm.catatan_pp || 'Tidak ada catatan spesifik.';
+                    infoStatus = `
+                        <p class="mt-3 text-sm font-medium p-3 rounded-md bg-red-50 border border-red-100 text-red-800">
+                                <strong>Alasan Penolakan:</strong> ${alasan}<br>
+                                <span class="text-xs font-normal mt-1 block text-red-600">*Data ini tidak dapat diedit. Silakan buat pendaftaran baru.</span>
+                        </p>`;
+                    break;
+            }
+            container.innerHTML = badgeHtml + infoStatus;
+        }
+
+        function renderPendaftarInfo(tbm) {
+            const container = document.getElementById('detail-pendaftar');
+            container.innerHTML =
+                renderDetailItem("Nama Lengkap", tbm.nama_pendaftar) +
+                renderDetailItem("Nomor Kontak (HP/WA)", tbm.kontak_pendaftar) +
+                renderDetailItem("Status pada TBM", tbm.status_pendaftar);
+        }
+
+        function renderStep2(tbm) {
+            const container = document.getElementById('detail-step-2');
+            container.innerHTML =
+                renderDetailItem("Sumber Referensi", tbm.ref_sumber) +
+                renderDetailItem("Identitas Pemberi Referensi", tbm.ref_identitas) +
+                renderDetailItem("Pengetahuan tentang Pengurus Daerah (PD) Forum TBM", tbm.ref_status_pd);
+        }
+
+        function renderStep3(tbm) {
+            const container = document.getElementById('detail-step-3');
+            let alamatHtml = '';
+
+            if (tbm.provinsi_nama === 'LUAR NEGERI') {
+                alamatHtml =
+                    renderDetailItem("Negara", tbm.negara) +
+                    renderDetailItem("Negara Bagian / Provinsi", tbm.alamat_negara_bagian) +
+                    renderDetailItem("Kota", tbm.alamat_kota_luar) +
+                    renderDetailItem("Alamat Lengkap", tbm.alamat_jalan_luar);
+            } else {
+                alamatHtml =
+                    renderDetailItem("Provinsi", tbm.provinsi_nama) +
+                    renderDetailItem("Kabupaten / Kota", tbm.kabupaten_nama) +
+                    renderDetailItem("Kecamatan / Distrik", tbm.alamat_kecamatan) +
+                    renderDetailItem("Desa / Kelurahan", tbm.alamat_desa) +
+                    renderDetailItem("Alamat Jalan, RT/RW", tbm.alamat_jalan);
+            }
+
+            container.innerHTML =
+                renderDetailItem("Nama TBM", tbm.nama_tbm) +
+                alamatHtml +
+                renderDetailItem("Kodepos", tbm.alamat_kodepos) +
+                renderDetailItem("Email TBM", tbm.tbm_email) +
+                renderDetailItem("Telepon TBM", tbm.tbm_telepon) +
+                renderDetailItem("Website", tbm.tbm_website) +
+                renderDetailItem("Facebook", tbm.medsos_facebook) +
+                renderDetailItem("Instagram", tbm.medsos_instagram) +
+                renderDetailItem("Media Sosial Lainnya", tbm.medsos_lainnya);
+        }
+
+        function renderStep4(tbm) {
+            const container = document.getElementById('detail-step-4');
+            let kelembagaanHtml = '';
+
+            if (tbm.kelembagaan_bentuk === 'Lembaga/organisasi berbadan hukum (memiliki akta pendirian)' || tbm.kelembagaan_bentuk === 'Lembaga di bawah yayasan/perkumpulan/lembaga lainnya yang berbadan hukum') {
+                kelembagaanHtml =
+                    renderDetailItem("Bentuk Badan Hukum", tbm.kelembagaan_badan_hukum) +
+                    renderDetailItem("Akta Pendirian", tbm.kelembagaan_akta_pendirian) +
+                    renderDetailItem("Tanggal Akta", tbm.kelembagaan_tgl_akta) +
+                    renderDetailItem("SK Kemenkumham", tbm.kelembagaan_sk_kemenkumham) +
+                    renderDetailItem("Tanggal SK", tbm.kelembagaan_tgl_sk) +
+                    renderDetailItem("NPWP", tbm.kelembagaan_npwp) +
+                    renderDetailItem("Rekening Bank", tbm.kelembagaan_rekening);
+            } else if (tbm.kelembagaan_bentuk === 'Lembaga di bawah satuan pendidikan non formal') {
+                kelembagaanHtml =
+                    renderDetailItem("Nama Satuan Pendidikan", tbm.kelembagaan_nama_satuan) +
+                    renderDetailItem("SK Pendirian Satuan", tbm.kelembagaan_sk_pendirian) +
+                    renderDetailItem("Tanggal SK Pendirian", tbm.kelembagaan_tgl_sk_pendirian);
+            }
+
+            container.innerHTML =
+                renderDetailItem("Pendiri TBM", tbm.kelembagaan_pendiri) +
+                renderDetailItem("Tanggal Berdiri TBM", tbm.kelembagaan_tgl_berdiri) +
+                renderList("Status Perizinan", tbm.kelembagaan_status_izin) +
+                renderDetailItem("Bentuk Kelembagaan", tbm.kelembagaan_bentuk) +
+                kelembagaanHtml;
+        }
+
+        function renderStep5(tbm) {
+            const container = document.getElementById('detail-step-5');
+            container.innerHTML =
+                renderList("Layanan Literasi Dasar", tbm.program_layanan_literasi_dasar) +
+                renderList("Kegiatan Literasi Terkerap (2 teratas)", tbm.program_kegiatan_kerap) +
+                renderList("Isu Pemberdayaan dan Keberlanjutan (Maks 4)", tbm.program_isu_pemberdayaan) +
+                renderList("Karakteristik Daerah", tbm.program_daerah_3t) +
+                renderDetailItem("Jumlah Pengguna Layanan per Bulan", tbm.program_jml_pengguna) +
+                renderList("Usia Pengguna Terbanyak (Maks 3)", tbm.program_usia_pengguna) +
+                renderDetailItem("Gender Pengguna Terbanyak", tbm.program_gender_pengguna) +
+                renderDetailItem("Jumlah Koleksi Buku Cetak", tbm.program_jml_buku) +
+                renderList("Koleksi Selain Buku Cetak", tbm.program_koleksi_lain) +
+                renderDetailItem("Jenis Kegiatan", tbm.program_jenis_kegiatan) +
+                renderDetailItem("Rerata Kegiatan per Bulan (non-rutin)", tbm.program_rerata_kegiatan) +
+                renderDetailItem("Pengelola TBM", tbm.program_pengelola) +
+                renderDetailItem("Gender Pengelola Terbanyak", tbm.program_gender_pengelola) +
+                renderDetailItem("Jumlah Relawan", tbm.program_jml_relawan) +
+                renderList("Usia Relawan Terbanyak (Maks 2)", tbm.program_usia_relawan) +
+                renderList("Sumber Pendanaan Terbesar (Maks 3)", tbm.program_sumber_dana) +
+                renderList("Pengeluaran Terbesar (Maks 3)", tbm.program_pengeluaran_terbesar) +
+                renderDetailItem("Rerata Pengeluaran per Bulan", tbm.program_rerata_pengeluaran) +
+                renderList("Aktivitas Administrasi", tbm.program_aktivitas_administrasi) +
+                renderDetailItem("Jumlah TBM Lain di Kecamatan", tbm.program_jml_tbm_lain) +
+                renderDetailItem("Nama TBM Lain (jika tahu)", tbm.program_nama_tbm_lain) +
+                renderList("Jenis Kolaborasi", tbm.program_kolaborasi_jenis) +
+                renderList("Kolaborasi Dengan", tbm.program_kolaborasi_dengan) +
+                renderList("Pustaka/Produk Dihasilkan", tbm.program_pustaka_dihasilkan) +
+                renderList("Asal Pustaka/Produk", tbm.program_asal_pustaka);
+        }
+
+        function renderStep6(tbm) {
+            const container = document.getElementById('detail-step-6');
+            container.innerHTML =
+                renderDetailItem("Pengetahuan tentang Forum TBM", tbm.ftbm_pengetahuan) +
+                renderList("Sumber Pengetahuan", tbm.ftbm_sumber_pengetahuan) +
+                renderList("Alasan Bergabung (Maks 3)", tbm.ftbm_alasan_bergabung);
+        }
+
+        function renderStep7(tbm) {
+            const container = document.getElementById('detail-step-7');
+            container.innerHTML =
+                renderDetailItem("Minat Mengikuti Pengembangan Kapasitas", tbm.kap_minat_pengembangan) +
+                renderList("Topik Literasi 6+", tbm.kap_topik_literasi) +
+                renderList("Topik Keorganisasian", tbm.kap_topik_keorganisasian) +
+                renderList("Topik Kecakapan Diri", tbm.kap_topik_kecakapan_diri) +
+                renderList("Topik Kecakapan Hidup", tbm.kap_topik_kecakapan_hidup) +
+                renderList("Durasi Pembelajaran (Maks 3)", tbm.kap_durasi_pembelajaran) +
+                renderList("Kegiatan Belajar (Maks 3)", tbm.kap_kegiatan_belajar) +
+                renderList("Sumber Belajar (Maks 3)", tbm.kap_sumber_belajar) +
+                renderList("Peran Kontribusi (Maks 3)", tbm.kap_kontribusi_peran);
+        }
+
+        function renderStep8(tbm) {
+            const container = document.getElementById('detail-step-8');
+            container.innerHTML =
+                renderDetailItem("Menyatakan informasi benar", tbm.val_pernyataan_kebenaran) +
+                renderDetailItem("Setuju AD/ART & Peraturan", tbm.val_setuju_ad_art) +
+                renderDetailItem("Setuju mengikuti kegiatan", tbm.val_setuju_kegiatan) +
+                renderDetailItem("Setuju gabung grup WA", tbm.val_setuju_grup_wa);
+        }
+
+        function setupEventListeners() {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileMenu.classList.toggle('hidden');
+            });
+
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await _supabase.auth.signOut();
+                window.location.replace('index.html');
+            });
+
+            window.addEventListener('click', (e) => {
+                if (profileMenu && !profileMenu.classList.contains('hidden') && !profileDropdown.contains(e.target)) {
+                    profileMenu.classList.add('hidden');
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

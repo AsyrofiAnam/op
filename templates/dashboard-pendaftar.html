@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard TBM - Forum TBM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary: #5B86A4;
+            --secondary: #34495e;
+            --dark: #2c3e50;
+            --light: #F9FAFB;
+            --accent: #4CA1AF;
+            --gradient: linear-gradient(135deg, #5B86A4 0%, #4CA1AF 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            padding-top: 75px;
+        }
+
+        .primary-btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(91, 134, 164, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(91, 134, 164, 0.4);
+        }
+
+        .secondary-btn {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(91, 134, 164, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* --- STATUS BADGES --- */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* 1_DRAFT: Abu-abu */
+        .status-draft {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+
+        .status-draft .dot {
+            background-color: #9ca3af;
+        }
+
+        /* 2_BARU: Kuning/Oranye */
+        .status-baru {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+        }
+
+        .status-baru .dot {
+            background-color: #f59e0b;
+        }
+
+        /* 3_AKTIF: Hijau */
+        .status-aktif {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .status-aktif .dot {
+            background-color: #10b981;
+        }
+
+        /* 4_DITOLAK: Merah */
+        .status-ditolak {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .status-ditolak .dot {
+            background-color: #ef4444;
+        }
+
+
+        header {
+            background-color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-img {
+            height: 50px;
+            width: auto;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--secondary);
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+        }
+
+        .nav-link-icon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link-icon i {
+            font-size: 1rem;
+        }
+
+        .nav-link-icon span {
+            display: inline-block;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0px;
+            left: 0;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .nav-buttons-container {
+            display: flex;
+            gap: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header id="header">
+        <div class="max-w-6xl mx-auto px-5 w-full">
+            <div class="flex justify-between items-center py-2">
+                <div class="logo">
+                    <a href="index.html">
+                        <img src="../static/style/image/Logo-Forum-TBM.png" alt="Logo TBM" class="logo-img">
+                    </a>
+                </div>
+
+                <ul class="nav-menu flex items-center list-none">
+                    <li id="profile-dropdown" class="relative">
+                        <button id="profile-btn"
+                            class="flex items-center gap-2 transition-transform duration-200 hover:scale-105">
+                            <span class="inline-block h-9 w-9 overflow-hidden rounded-full bg-gray-100">
+                                <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </span>
+                            <span id="profile-username" class="font-medium"
+                                style="color: var(--secondary);">Memuat...</span>
+                        </button>
+
+                        <div id="profile-menu"
+                            class="absolute right-0 mt-2 w-60 origin-top-right rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-30"
+                            style="font-family: 'Poppins', sans-serif;">
+                            <div class="py-1">
+                                <div class="border-b border-gray-200 px-4 py-3">
+                                    <p class="text-sm font-semibold" style="color: var(--dark);" id="menu-username">
+                                        Memuat...</p>
+                                    <p class="truncate text-xs text-gray-500" id="menu-email">Memuat...</p>
+                                </div>
+                                <a href="index.html"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-home w-4"></i>
+                                    <span>Beranda</span>
+                                </a>
+                                <a href="profil-pendaftar.html"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user-circle w-4"></i>
+                                    <span>Lihat Profil</span>
+                                </a>
+                                <button id="logout-btn"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt w-4"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-5 w-full py-10 md:py-16">
+
+        <div class="mb-10">
+            <h1 class="text-4xl font-bold" style="color: var(--dark);" id="welcome-username">Selamat Datang!</h1>
+            <p class="text-xl mt-1" style="color: var(--secondary);">Ini adalah halaman dashboard pendaftaran TBM Anda.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+
+            <div class="lg:col-span-2">
+
+                <div
+                    class="bg-white rounded-xl shadow-lg p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-2">
+                    <div class="md:w-2/5">
+                        <h2 class="text-2xl font-bold" style="color: var(--primary);">Siap Daftarkan TBM?</h2>
+                        <p class="text-md" style="color: var(--secondary);">
+                            Klik tombol di samping untuk memulai pendaftaran TBM baru.
+                        </p>
+                    </div>
+                    <div class="md:w-3/5 flex justify-end w-full">
+                        <button class="primary-btn text-lg w-full md:w-auto px-6" id="btn-daftar-baru">
+                            <i class="fas fa-plus-circle"></i>
+                            Daftarkan TBM Baru
+                        </button>
+                    </div>
+                </div>
+
+
+                <div>
+                    <h2 class="text-3xl font-bold mb-6" style="color: var(--dark);">Status TBM Saya</h2>
+
+                    <div id="tbm-list-container" class="space-y-6">
+
+                        <div id="tbm-loading" class="text-center py-10">
+                            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary);"></i>
+                            <p class="mt-2 text-lg" style="color: var(--secondary);">Memuat data TBM Anda...</p>
+                        </div>
+
+                        <div id="tbm-empty-state"
+                            class="hidden bg-white rounded-xl shadow-lg p-10 text-center border-2 border-dashed border-gray-300">
+                            <i class="fas fa-folder-open fa-3x" style="color: var(--primary);"></i>
+                            <h3 class="mt-4 text-xl font-bold" style="color: var(--dark);">Anda Belum Mendaftarkan TBM
+                            </h3>
+                            <p class="mt-1" style="color: var(--secondary);">Mulai daftarkan TBM pertama Anda sekarang!
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-1 space-y-8 mt-10 lg:mt-0">
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold border-b pb-3 mb-4" style="color: var(--dark);">
+                        <i class="fas fa-question-circle" style="color: var(--primary); margin-right: 8px;"></i>
+                        Butuh Bantuan?
+                    </h3>
+                    <p class="mb-4" style="color: var(--secondary);">
+                        Jika mengalami kendala dalam pendaftaran, silakan baca panduan atau hubungi admin.
+                    </p>
+                    <a href="index.html#faq" class="secondary-btn w-full justify-center">
+                        <i class="fas fa-book-open"></i>
+                        Baca Panduan (FAQ)
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+
+    <script src="../static/style/js/config.js"></script>
+
+    <script>
+        // === Elemen Global ===
+        const profileBtn = document.getElementById('profile-btn');
+        const profileMenu = document.getElementById('profile-menu');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // Elemen Navbar
+        const navProfileUsername = document.getElementById('profile-username');
+        const navMenuUsername = document.getElementById('menu-username');
+        const navMenuEmail = document.getElementById('menu-email');
+
+        // Elemen Konten
+        const welcomeUsername = document.getElementById('welcome-username');
+        const tbmListContainer = document.getElementById('tbm-list-container');
+        const tbmLoading = document.getElementById('tbm-loading');
+        const tbmEmptyState = document.getElementById('tbm-empty-state');
+        const btnDaftarBaru = document.getElementById('btn-daftar-baru');
+
+        // Variabel global untuk user
+        let currentUser = null;
+        let userProfile = null;
+
+        // Fungsi: Auth Guard & Pemuatan DataDijalankan saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Cek Sesi
+            const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+
+            if (sessionError || !session) {
+                // AUTH GUARD: Jika tidak ada sesi, tendang ke index.html
+                window.location.replace('index.html');
+                return;
+            }
+
+            // 2. Simpan data user
+            currentUser = session.user;
+
+            // 3. Muat data profil dan TBM secara paralel
+            await Promise.all([
+                loadUserProfile(currentUser.id),
+                loadUserTBMs(currentUser.id)
+            ]);
+
+            // 4. Inisialisasi Event Listener
+            setupEventListeners();
+        });
+
+        // Memuat profil pengguna dari tabel 'user_profiles'
+        async function loadUserProfile(userId) {
+            try {
+                const { data: profile, error } = await _supabase
+                    .from('user_profiles')
+                    .select('username, role')
+                    .eq('id', userId)
+                    .single();
+
+                if (error) throw error;
+                if (!profile) throw new Error('Profil tidak ditemukan.');
+
+                userProfile = profile;
+
+                const username = profile.username;
+                const email = currentUser.email;
+
+                navProfileUsername.textContent = `Halo, ${username}`;
+                navMenuUsername.textContent = username;
+                navMenuEmail.textContent = email;
+                welcomeUsername.textContent = `Selamat Datang, ${username}!`;
+
+            } catch (error) {
+                console.error('Error memuat profil pengguna:', error.message);
+                navProfileUsername.textContent = 'Halo, Pengguna';
+                welcomeUsername.textContent = 'Selamat Datang!';
+            }
+        }
+
+        // Memuat daftar TBM yang didaftarkan oleh pengguna
+        async function loadUserTBMs(userId) {
+            try {
+                const staticCards = document.querySelectorAll('.tbm-card-static');
+                staticCards.forEach(card => card.remove());
+
+                tbmLoading.classList.remove('hidden');
+                tbmEmptyState.classList.add('hidden');
+
+                const { data: tbmData, error } = await _supabase
+                    .from('tbm')
+                    .select('*')
+                    .eq('user_pendaftar_id', userId)
+                    .order('updated_at', { ascending: false }); // Urutkan berdasarkan update terakhir
+
+                if (error) throw error;
+
+                tbmLoading.classList.add('hidden');
+
+                if (tbmData && tbmData.length > 0) {
+                    tbmData.forEach(tbm => {
+                        const tbmCardHTML = createTbmCard(tbm);
+                        tbmLoading.insertAdjacentHTML('beforebegin', tbmCardHTML);
+                    });
+                } else {
+                    tbmEmptyState.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error memuat data TBM:', error.message);
+                tbmLoading.classList.add('hidden');
+                tbmListContainer.innerHTML = `<p class="text-red-500 text-center">Gagal memuat data TBM Anda.</p>`;
+            }
+        }
+
+        // Helper: Membuat HTML string untuk satu kartu TBM
+        function createTbmCard(tbm) {
+            const dateObj = new Date(tbm.updated_at || tbm.created_at);
+            const formattedDate = dateObj.toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+
+            const namaTbm = tbm.nama_tbm || "Draft TBM (Belum Dinamai)";
+            let statusBadge = '';
+            let cardActions = '';
+            let infoStatus = '';
+            let dateLabel = '';
+
+            // Link URLs
+            const editLink = `edit-tbm.html?id=${tbm.id}`;
+            const detailLink = `detail-tbm.html?id=${tbm.id}`;
+
+            switch (tbm.status) {
+                case '1_DRAFT':
+                    statusBadge = `<span class="status-badge status-draft"><span class="dot"></span>Draft</span>`;
+                    dateLabel = "Disimpan pada:";
+                    cardActions = `
+                        <a href="${editLink}" class="primary-btn">
+                            <i class="fas fa-edit"></i> Lanjutkan Edit
+                        </a>`;
+                    break;
+
+                case '2_BARU':
+                    statusBadge = `<span class="status-badge status-baru"><span class="dot"></span>Verifikasi PD</span>`;
+                    dateLabel = "Dikirim pada:";
+                    infoStatus = `<p class="mt-2 text-sm text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-100">
+                        <i class="fas fa-clock mr-1"></i> Menunggu verifikasi kelengkapan data oleh Pengurus Daerah (PD).</p>`;
+                    cardActions = `<a href="${detailLink}" class="secondary-btn"><i class="fas fa-eye"></i> Lihat Detail</a>`;
+                    break;
+
+                case '3_DISETUJUI': 
+                    statusBadge = `<span class="status-badge status-baru" style="background-color:#e0f2fe; color:#0369a1; border-color:#bae6fd;">
+                        <span class="dot" style="background-color:#0ea5e9;"></span>Validasi PW</span>`;
+                    dateLabel = "Diverifikasi pada:";
+                    infoStatus = `<p class="mt-2 text-sm text-gray-600 bg-blue-50 p-2 rounded border border-blue-100">
+                        <i class="fas fa-check-circle mr-1"></i> Data telah disetujui oleh Pengurus Daerah (PD). Menunggu validasi akhir sebelum penerbitan SK dan Kartu Digital oleh Pengurus Wilayah (PW).</p>`;
+                    cardActions = `<a href="${detailLink}" class="secondary-btn"><i class="fas fa-eye"></i> Lihat Detail</a>`;
+                    break;
+
+                case '5_AKTIF':
+                    statusBadge = `<span class="status-badge status-aktif"><span class="dot"></span>Resmi / Aktif</span>`;
+                    dateLabel = "Disahkan pada:";
+
+                    // Tampilkan Nomor Anggota untuk Login
+                    const noAnggota = tbm.nomor_anggota_tbm || 'Menunggu Generate...';
+                    infoStatus = `
+                        <div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <p class="text-sm text-green-800 uppercase font-bold mb-1">Nomor Anggota:</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-mono font-bold text-gray-800 select-all">${noAnggota}</span>
+                                <button onclick="navigator.clipboard.writeText('${noAnggota}')" class="text-green-600 hover:text-green-800 text-xs font-semibold">
+                                    <i class="far fa-copy text-sm"></i> Salin
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">Gunakan nomor ini dan password default (sama dengan nomor anggota) untuk login sebagai Anggota.</p>
+                        </div>`;
+
+                    cardActions = `<a href="${detailLink}" class="secondary-btn"><i class="fas fa-eye"></i> Lihat Detail</a>`;
+                    break;
+
+                case '4_DITOLAK':
+                    statusBadge = `<span class="status-badge status-ditolak"><span class="dot"></span>Ditolak</span>`;
+                    dateLabel = "Ditolak pada:";
+                    // UPDATE LOGIKA: Cek catatan dari PD juga
+                    if (tbm.catatan_pd || tbm.catatan_pw || tbm.catatan_pp) {
+                        // Prioritas tampilan alasan (dari level tertinggi yang mungkin menolak)
+                        const alasan = tbm.catatan_pd || tbm.catatan_pw || 'Tidak ada catatan spesifik.';
+                        infoStatus = `
+                            <p class="mt-3 text-sm font-medium p-3 rounded-md bg-red-50 border border-red-100 text-red-800">
+                                <strong>Alasan Penolakan:</strong> ${alasan}<br>
+                                <span class="text-xs font-normal mt-1 block text-red-600">*Data ini tidak dapat diedit. Silakan buat pendaftaran baru.</span>
+                            </p>`;
+                    }
+                    cardActions = `<a href="${detailLink}" class="secondary-btn"><i class="fas fa-eye"></i> Lihat Detail</a>`;
+                    break;
+            }
+
+            return `
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-100">
+                    <div class="p-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
+                            <h3 class="text-2xl font-bold" style="color: var(--dark);" title="${namaTbm}">${namaTbm}</h3>
+                            ${statusBadge}
+                        </div>
+                        <p class="mt-2 text-sm" style="color: var(--secondary);">${dateLabel} ${formattedDate}</p>
+                        ${infoStatus}
+                    </div>
+                    <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex flex-wrap gap-3">
+                        ${cardActions}
+                    </div>
+                </div>
+            `;
+        }
+
+        function setupEventListeners() {
+            if (profileBtn) {
+                profileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    profileMenu.classList.toggle('hidden');
+                });
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    logoutBtn.disabled = true;
+                    logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; Logging out...';
+
+                    const { error } = await _supabase.auth.signOut();
+
+                    if (error) {
+                        console.error('Error logging out:', error.message);
+                        logoutBtn.disabled = false;
+                        logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt w-4"></i>&nbsp; Logout';
+                    } else {
+                        window.location.replace('index.html');
+                    }
+                });
+            }
+
+            window.addEventListener('click', (e) => {
+                if (profileMenu && !profileMenu.classList.contains('hidden')) {
+                    if (!profileDropdown.contains(e.target)) {
+                        profileMenu.classList.add('hidden');
+                    }
+                }
+
+            });
+
+            if (btnDaftarBaru) {
+                btnDaftarBaru.addEventListener('click', () => {
+                    window.location.href = 'daftar-tbm.html';
+                });
+            }
+        }
+
+    </script>
+</body>
+
+</html>
